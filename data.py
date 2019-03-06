@@ -1,8 +1,12 @@
 import numpy as np
-import requests
 import csv
 
-def main():
+def standardize_data(matrix):
+    mean = np.mean(matrix, axis=0)
+    std = np.std(matrix, axis=0, ddof=1)
+    return (matrix - mean) / std
+
+def read_data():
     names = []
     player_stats = []
     targets_1 = []
@@ -16,7 +20,7 @@ def main():
 
         for row in nbareader:
             name = row[1].split("\\")[0]
-            position = row[2]
+            position = row[2].split('-')[0]
             stats = row[5:]
             if name not in names:
                 names.append(name)
@@ -52,6 +56,3 @@ def main():
     player_stats = player_stats.astype(np.float)
 
     return (names, player_stats, targets_1, targets_2, targets_3, targets_4)
-
-if __name__ == "__main__":
-    main()
