@@ -8,7 +8,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.mixture import GaussianMixture as GMM
-
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.cluster import AgglomerativeClustering as AGGC
 
 def get_t1_colors(position):
     color = {
@@ -41,8 +42,10 @@ def get_t3_colors(position):
 
 def get_t4_colors(position):
     color = {
-        "BC": 'r',
-        "FC": 'b'
+        "PG": 'r',
+        "W": 'b',
+        "PF": 'c',
+        "C": 'g'
     }[position]
 
     return color
@@ -56,33 +59,38 @@ def main():
     test = lda.transform(stats)
     
     #pca = PCA(n_components=2)
-    #pca.fit(test)
-    #test = pca.transform(test)
+    #pca.fit(stats)
+    #test = pca.transform(stats)
     
     ax = plt.subplot(311)
     for i, obs in enumerate(test):
-        ax.scatter(obs[0], obs[1], c=get_t3_colors(t3[i]), s=2)
-
-        if names[i] in ["Russell Westbrook","Ben Simmons", "LeBron James", "Kawhi Leonard"]:
-            ax.annotate(names[i], (obs[0], obs[1]))
+        ax.scatter(obs[0], obs[1], c=get_t4_colors(t4[i]), s=10)
 
     ax = plt.subplot(312)
-    kmeans = KMeans(3, random_state=0)
+    kmeans = KMeans(6, random_state=0)
     labels = kmeans.fit_predict(test)
     plt.scatter(test[:,0], test[:,1], c=labels, cmap='viridis', s=2)
 
     ax = plt.subplot(313)
-    gmm = GMM(n_components=3).fit(test)
-    gmm_labels = gmm.predict(test)
-    probs = gmm.predict_proba(test)
-    size = 10 * probs.max(1) ** 2
-    print(size)
-    plt.scatter(test[:,0], test[:,1], c=gmm_labels, cmap='viridis', s=size)
-    silhouette_avg = silhouette_score(test, gmm_labels)
+    ward = AGGC(n_clusters=4, linkage='ward').fit(test)
+    ward_labels = ward.labels_
+    plt.scatter(test[:,0], test[:,1], c=ward_labels, cmap='viridis', s=2)
+
+    #gmm = GMM(n_components=3).fit(test)
+    #gmm_labels = gmm.predict(test)
+    #probs = gmm.predict_proba(test)
+    #size = 10 * probs.max(1) ** 2
+    #plt.scatter(test[:,0], test[:,1], c=gmm_labels, cmap='viridis', s=size)
+    silhouette_avg = silhouette_score(test, ward_labels)
+    #sample_silhouette_values = silhouette_samples(test, ward_labels)
+
+    for i, obs in enumerate(test):
+       if ward_labels[i] == 1:
+            print(names[i])
+
     print(silhouette_avg)
 
     plt.show()
-
 
 
 if __name__ == "__main__":
