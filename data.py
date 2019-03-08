@@ -22,18 +22,23 @@ def read_data():
     targets_3 = []
     targets_4 = []
 
-    with open('./nba_2017.csv', newline='') as csvfile:
+    with open('./nba_2017_combined.csv', newline='') as csvfile:
         nbareader = csv.reader(csvfile)
+
         next(nbareader)
 
-        superstars = ["LeBron James", "Kevin Durant", "Giannis Antetokounmpo", "Steph Curry", "Russell Westbrook", "James Harden"]
+        superstars = ["LeBron James", "Kawhi Leonard", "Kevin Durant", "Giannis Antetokounmpo", "Steph Curry", "Russell Westbrook", "James Harden"]
 
         for row in nbareader:
             name = row[1].split("\\")[0]
             position = row[2].split('-')[0]
             games_played = row[5]
+            games_started = row[6]
+            minutes_played = row[30]
+
             stats = row[5:]
-            if name not in names and int(games_played) > 15:
+
+            if name not in names and int(minutes_played) >= 500:
                 names.append(name)
                 stats = ['0.0' if stat is '' else stat for stat in stats]
                 player_stats.append(stats)
@@ -59,20 +64,18 @@ def read_data():
 
                 if position in ["PG"]:
                     targets_4.append("PG")
-                elif position in ["SG", "SF"]:
+                elif position in ["SG", "SF", "PF"]:
                     targets_4.append("W")
-                elif position in ["PF"]:
-                    targets_4.append("PF")
                 elif position in ["C"]:
                     targets_4.append("C")
 
 
-
     player_stats = np.array(player_stats)
     player_stats = player_stats.astype(np.float)
-    remove = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    #remove = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    remove = [0, 1, 2, 3, 25]
     player_stats = np.delete(player_stats, remove, 1)
 
-    print("shape", player_stats.shape)
+    print(player_stats.shape)
 
     return (names, player_stats, targets_1, targets_2, targets_3, targets_4)

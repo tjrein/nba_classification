@@ -3,6 +3,7 @@ import sklearn
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis as QDA
 from data import read_data, standardize_data
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import KMeans
@@ -68,22 +69,39 @@ def get_t4_colors(position):
 
 def compute_bic(test):
     bic = []
+    fig2 = plt.figure(2)
     lowest_bic = np.infty
-    n_components_range = range(6, 16)
+    n_components_range = range(5, 16)
     cv_types = ['spherical', 'tied', 'diag', 'full']
 
-    for cv_type in cv_types:
+    for i, cv_type in enumerate(cv_types):
+        subplot = int('41' + str(i + 1))
+        ax = fig2.add_subplot(subplot)
+        ax.set_title(cv_type)
+        plt_bic = []
+
         for n_components in n_components_range:
             gmm = GMM(random_state=0, n_components=n_components, covariance_type=cv_type)
             gmm.fit(test)
-            bic.append(gmm.bic(test))
+
+            bic.append(gmm.aic(test))
+            plt_bic.append(gmm.aic(test))
+
+            str_val = str(int(gmm.aic(test)))
+            ax.annotate(str_val, (n_components, gmm.aic(test)))
+
             if bic[-1] < lowest_bic:
                 lowest_bic = bic[-1]
                 best_gm = gmm
 
+        ax.plot(n_components_range, plt_bic)
+        #ax.annotate(plt_bic, (n_components_range, plt_bic))
 
-    print("best_gm", best_gm)
     print("bic", bic)
+    print("lowest bic", lowest_bic)
+    print(best_gm)
+
+    return best_gm
 
 def compute_agg_score(test):
     for i in range(2, 21):
@@ -103,79 +121,81 @@ def compute_silhouette_gmm(test):
 
 def main():
     names, stats, t1, t2, t3, t4 = read_data()
-    #stats = standardize_data(stats)
+    stats = standardize_data(stats)
 
-    pca = PCA(n_components=6)
+    fig1 = plt.figure(1)
+
+    pca = PCA(n_components=0.95, svd_solver='full')
     pca.fit(stats)
     pcs = pca.transform(stats)
+
+    #pca = PCA(n_components=2)
+    #pca.fit(stats)
+    #test = pca.transform(stats)
     
-    #mds = MDS(n_components=5, random_state=0)
+    #mds = MDS(n_components=2, random_state=0)
     #test = mds.fit_transform(stats)
 
     #lda = LDA(n_components=2, solver='eigen')
     #lda.fit(stats, t2)
     #test = lda.transform(stats)
 
-    #mds = MDS(n_components=2, random_state=0)
+    #mds = MDS(n_components=12, random_state=0)
     #pcs = mds.fit_transform(stats)
 
-    #isomap = Isomap(n_neighbors=8)
+    #isomap = Isomap(n_neighbors=5)
     #pcs = isomap.fit_transform(stats)
 
-    lda = LDA(n_components=2, solver='eigen')
+    lda = LDA(n_components=2, solver='eigen', shrinkage='auto')
     lda.fit(pcs, t1)
     test = lda.transform(pcs)
+
+    #qda = QDA()
+    #qda.fit(stats, t1)
+    #test = qda.transform(stats)
 
     #tsne = TSNE(random_state=0)
     #test = tsne.fit_transform(stats)
     
-    ax = plt.subplot(211)
+    ax = fig1.add_subplot(211)
     for i, obs in enumerate(test):
         ax.scatter(obs[0], obs[1], c=get_t1_colors(t1[i]), s=5)
 
-        #if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "Jarrett Jack", "LeBron James"]:
-           # ax.annotate(names[i], (obs[0], obs[1]))
+        if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
+            ax.annotate(names[i], (obs[0], obs[1]))
             
-
-    #ax = plt.subplot(312)
-    #kmeans = KMeans(8, random_state=0)
-    #labels = kmeans.fit_predict(test)
-    #plt.scatter(test[:,0], test[:,1], c=labels, cmap='viridis', s=2)
-
-    #ward = AGGC(n_clusters=10, linkage='ward').fit(test)
-    #ward_labels = ward.labels_
-    #plt.scatter(test[:,0], test[:,1], c=ward_labels, cmap='viridis', s=2)
-    #ward_avg = silhouette_score(test, ward_labels)
-
-    #compute_silhouette_gmm(test)
-    #compute_agg_score(test)
-    compute_bic(test)
-
-    ax = plt.subplot(212)
-    gmm = GMM(n_components=6, random_state=0, covariance_type='spherical').fit(test)
+    ax = fig1.add_subplot(212)
+    gmm = compute_bic(test)
     gmm_labels = gmm.predict(test)
     probs = gmm.predict_proba(test)
-    size = 10 * probs.max(1) ** 2
-    plt.scatter(test[:,0], test[:,1], c=gmm_labels, cmap='viridis', s=size)
-    #gmm_avg = silhouette_score(test, gmm_labels)
-    #sample_silhouette_values = silhouette_samples(test, ward_labels)
+    size = 20 * probs.max(1) ** 2
+    ax.scatter(test[:,0], test[:,1], c=gmm_labels, cmap='viridis', s=size)
 
+    #compute_agg_score(test)
+    #ax = plt.subplot(313)
+    #ward = AGGC(n_clusters=7, linkage='ward').fit(test)
+    #ward_labels = ward.labels_
+    #plt.scatter(test[:,0], test[:,1], c=ward_labels, cmap='viridis', s=2)
+
+ 
     #print("ward", ward_avg)
     #print("gmm", gmm_avg)
 
+    labels = gmm_labels
+
     groups = {}
     for i, obs in enumerate(test):
-        label = gmm_labels[i]
+        label = labels[i]
 
         if not label in groups:
             groups[label] = []
 
         groups[label].append({'name': names[i], 'index': i })
 
-    for key, val in groups.items():
-        print("Group", key)
-        print("\n")
-        print(val)
+    #for key, val in groups.items():
+        #print("Group", key)
+        #print("\n")
+        #print(val)
 
 
     #get_statistical_profile(stats, groups)
