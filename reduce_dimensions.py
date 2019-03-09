@@ -15,17 +15,43 @@ from sklearn.manifold import MDS
 from sklearn.manifold import Isomap
 from sklearn.manifold import TSNE
 
-def get_statistical_profile(stats, groups):
-    group = groups[3]
-    mean_stats = stats.mean(axis=0)
-    print(mean_stats)
-    #print(group)
+np.set_printoptions(suppress=True)
 
-    stats = [obj['stats'] for obj in group]
+def get_statistical_profile(orig_stats, groups):
+    group = groups[1]
+    diff_group = groups[6]
+    mean_stats = orig_stats.mean(axis=0)
+
+    indices = [ obj['index'] for obj in group]
+    diff_indices = [ obj['index'] for obj in diff_group]
+
+    stats = [ orig_stats[index] for index in indices]
+    diff_stats = [ orig_stats[j] for j in diff_indices]
+
     group_stats = np.vstack(stats)
-    mean_group = group_stats.mean(axis=0)
+    diff_group_stats = np.vstack(diff_stats)
 
-    fig = plt.figure(2)
+    mean_group = group_stats.mean(axis=0)
+    diff_mean_group = diff_group_stats.mean(axis=0)
+    
+    index = np.arange(21)
+
+    bar_width = 0.35
+
+    fig2 = plt.figure(2)
+    ax = fig2.add_subplot(111)
+
+    ax.bar(index, mean_group[0:21], bar_width, color='b', label='Group Avgs') 
+    ax.bar(index + bar_width, diff_mean_group[0:21], bar_width, color='r', label='Leage Avgs') 
+
+    ax.set_xticks(index + bar_width / 2.0)
+    xticklabels = [
+        'FG', 'FGA', 'FG%', '3P', '3PA', '3P%', '2P', '2PA', '2P%', 'EFG'
+        'FT', 'FTA', 'FT%', 'ORB', 'DRB', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PF', 'PPG'
+    ]
+
+    ax.set_xticklabels(xticklabels)
+    fig2.tight_layout()
 
 def get_t1_colors(position):
     color = {
@@ -69,32 +95,32 @@ def get_t4_colors(position):
 
 def compute_bic(test):
     bic = []
-    fig2 = plt.figure(2)
+    #fig2 = plt.figure(2)
     lowest_bic = np.infty
-    n_components_range = range(5, 16)
+    n_components_range = range(7, 16)
     cv_types = ['spherical', 'tied', 'diag', 'full']
 
     for i, cv_type in enumerate(cv_types):
         subplot = int('41' + str(i + 1))
-        ax = fig2.add_subplot(subplot)
-        ax.set_title(cv_type)
-        plt_bic = []
+        #ax = fig2.add_subplot(subplot)
+        #ax.set_title(cv_type)
+        #plt_bic = []
 
         for n_components in n_components_range:
             gmm = GMM(random_state=0, n_components=n_components, covariance_type=cv_type)
             gmm.fit(test)
 
             bic.append(gmm.aic(test))
-            plt_bic.append(gmm.aic(test))
+            #plt_bic.append(gmm.aic(test))
 
             str_val = str(int(gmm.aic(test)))
-            ax.annotate(str_val, (n_components, gmm.aic(test)))
+            #ax.annotate(str_val, (n_components, gmm.aic(test)))
 
-            if bic[-1] < lowest_bic:
+            if bic[-1] <= lowest_bic:
                 lowest_bic = bic[-1]
                 best_gm = gmm
 
-        ax.plot(n_components_range, plt_bic)
+        #ax.plot(n_components_range, plt_bic)
         #ax.annotate(plt_bic, (n_components_range, plt_bic))
 
     print("bic", bic)
@@ -121,6 +147,7 @@ def compute_silhouette_gmm(test):
 
 def main():
     names, stats, t1, t2, t3, t4 = read_data()
+    orig_stats = stats
     stats = standardize_data(stats)
 
     fig1 = plt.figure(1)
@@ -140,8 +167,8 @@ def main():
     #lda.fit(stats, t2)
     #test = lda.transform(stats)
 
-    #mds = MDS(n_components=12, random_state=0)
-    #pcs = mds.fit_transform(stats)
+    #mds = MDS(n_components=2, random_state=0)
+    #test = mds.fit_transform(stats)
 
     #isomap = Isomap(n_neighbors=5)
     #pcs = isomap.fit_transform(stats)
@@ -150,9 +177,6 @@ def main():
     lda.fit(pcs, t1)
     test = lda.transform(pcs)
 
-    #qda = QDA()
-    #qda.fit(stats, t1)
-    #test = qda.transform(stats)
 
     #tsne = TSNE(random_state=0)
     #test = tsne.fit_transform(stats)
@@ -164,8 +188,12 @@ def main():
         if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
             ax.annotate(names[i], (obs[0], obs[1]))
             
+    suggested_gmm = compute_bic(test)
+
     ax = fig1.add_subplot(212)
-    gmm = compute_bic(test)
+    #gmm = compute_bic(test)
+    #gmm = GMM(covariance_type='full', n_components=13).fit(test)
+    gmm = suggested_gmm
     gmm_labels = gmm.predict(test)
     probs = gmm.predict_proba(test)
     size = 20 * probs.max(1) ** 2
@@ -176,10 +204,6 @@ def main():
     #ward = AGGC(n_clusters=7, linkage='ward').fit(test)
     #ward_labels = ward.labels_
     #plt.scatter(test[:,0], test[:,1], c=ward_labels, cmap='viridis', s=2)
-
- 
-    #print("ward", ward_avg)
-    #print("gmm", gmm_avg)
 
     labels = gmm_labels
 
@@ -192,14 +216,12 @@ def main():
 
         groups[label].append({'name': names[i], 'index': i })
 
-    #for key, val in groups.items():
-        #print("Group", key)
-        #print("\n")
-        #print(val)
+    for key, val in groups.items():
+        print("Group", key)
+        print("\n")
+        print(val)
 
-
-    #get_statistical_profile(stats, groups)
-
+    get_statistical_profile(orig_stats, groups)
     plt.show()
 
 if __name__ == "__main__":
