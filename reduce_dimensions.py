@@ -4,19 +4,13 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from data import read_data, standardize_data
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn.mixture import GaussianMixture as GMM
-from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.cluster import AgglomerativeClustering as AGGC
-from sklearn.manifold import MDS
-from sklearn.manifold import Isomap
 
 np.set_printoptions(suppress=True)
 
 def get_statistical_profile(orig_stats, groups):
-    group = groups[0]
+    group = groups[6]
     diff_group = groups[6]
     mean_stats = orig_stats.mean(axis=0)
 
@@ -40,7 +34,7 @@ def get_statistical_profile(orig_stats, groups):
     ax = fig2.add_subplot(111)
 
     ax.bar(index, mean_group[0:21], bar_width, color='g', label='Group Avgs') 
-    ax.bar(index + bar_width, diff_mean_group[0:21], bar_width, color='y', label='Leage Avgs') 
+    ax.bar(index + bar_width, mean_stats[0:21], bar_width, color='y', label='Leage Avgs') 
 
     ax.set_xticks(index + bar_width / 2.0)
     xticklabels = [
@@ -91,10 +85,10 @@ def get_t4_colors(position):
 
     return color
 
-def compute_bic(test):
-    bic = []
+def compute_aic(test):
+    aic = []
     #fig2 = plt.figure(2)
-    lowest_bic = np.infty
+    lowest_aic = np.infty
     n_components_range = range(5, 16)
     cv_types = ['spherical', 'tied', 'diag', 'full']
 
@@ -102,37 +96,30 @@ def compute_bic(test):
         subplot = int('41' + str(i + 1))
         #ax = fig2.add_subplot(subplot)
         #ax.set_title(cv_type)
-        #plt_bic = []
+        #plt_aic = []
 
         for n_components in n_components_range:
             gmm = GMM(random_state=0, n_components=n_components, covariance_type=cv_type)
             gmm.fit(test)
 
-            bic.append(gmm.aic(test))
-            #plt_bic.append(gmm.aic(test))
+            aic.append(gmm.aic(test))
+            #plt_aic.append(gmm.aic(test))
 
             str_val = str(int(gmm.aic(test)))
             #ax.annotate(str_val, (n_components, gmm.aic(test)))
 
-            if bic[-1] <= lowest_bic:
-                lowest_bic = bic[-1]
+            if aic[-1] <= lowest_aic:
+                lowest_aic = aic[-1]
                 best_gm = gmm
 
-        #ax.plot(n_components_range, plt_bic)
-        #ax.annotate(plt_bic, (n_components_range, plt_bic))
+        #ax.plot(n_components_range, plt_aic)
+        #ax.annotate(plt_aic, (n_components_range, plt_aic))
 
-    print("bic", bic)
-    print("lowest bic", lowest_bic)
+    print("aic", aic)
+    print("lowest aic", lowest_aic)
     print(best_gm)
 
     return best_gm
-
-def compute_agg_score(test):
-    for i in range(2, 21):
-        ward = AGGC(n_clusters=i, linkage='ward').fit(test)
-        ward_labels = ward.labels_
-        ward_avg = silhouette_score(test, ward_labels)
-        print("Ward avg", i, ward_avg)
 
 def compute_silhouette_gmm(test):
     for i in range(2, 21):
@@ -161,6 +148,24 @@ def perform_pca_plus_lda(stats, classes):
     result = perform_lda(pcs, classes)
     return result
 
+def get_gmm(data): 
+    gmm = compute_aic(data) 
+    clusters = gmm.predict(data)
+    probs = gmm.predict_proba(data)
+    return (clusters, probs)
+
+def assign_groups(clusters, data, names):
+    groups = {}
+    for i, obs in enumerate(data):
+        cluster = clusters[i]
+
+        if not cluster in groups:
+            groups[cluster] = []
+
+        groups[cluster].append({'name': names[i], 'index': i })
+
+    return groups
+
 def main():
     names, stats, t1, t2, t3, t4 = read_data()
     orig_stats = stats
@@ -169,61 +174,33 @@ def main():
     fig1 = plt.figure(1)
 
     #test = perform_pca(stats)
-    #test = perform_pca_plus_lda(stats, t1)
     #test = perform_lda(stats, t1)
+    test = perform_pca_plus_lda(stats, t1)
 
-
-    #mds = MDS(n_components=2, random_state=0)
-    #test = mds.fit_transform(stats)
-
-
-    #mds = MDS(n_components=2, random_state=0)
-    #test = mds.fit_transform(stats)
-
-    #isomap = Isomap(n_neighbors=8)
-    #test = isomap.fit_transform(stats)
-    
-    ax = fig1.add_subplot(111)
+    ax = fig1.add_subplot(211)
     for i, obs in enumerate(test):
         ax.scatter(obs[0], obs[1], c=get_t1_colors(t1[i]), s=5)
 
         #if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
         #    ax.annotate(names[i], (obs[0], obs[1]))
-            
-    suggested_gmm = compute_bic(test)
-    #ax = fig1.add_subplot(111)
-    #gmm = compute_bic(test)
-    #gmm = GMM(covariance_type='full', n_components=13).fit(test)
-    gmm = suggested_gmm
-    gmm_labels = gmm.predict(test)
-    probs = gmm.predict_proba(test)
+
+    ax = fig1.add_subplot(212)
+    clusters, probs = get_gmm(test)
     size = 20 * probs.max(1) ** 2
-    #ax.scatter(test[:,0], test[:,1], c=gmm_labels, cmap='viridis', s=size)
+    ax.scatter(test[:,0], test[:,1], c=clusters, cmap='viridis', s=size)
 
-    #compute_agg_score(test)
-    #ax = plt.subplot(313)
-    #ward = AGGC(n_clusters=7, linkage='ward').fit(test)
-    #ward_labels = ward.labels_
-    #plt.scatter(test[:,0], test[:,1], c=ward_labels, cmap='viridis', s=2)
+    labels = clusters
 
-    labels = gmm_labels
-
-    groups = {}
-    for i, obs in enumerate(test):
-        label = labels[i]
-
-        if not label in groups:
-            groups[label] = []
-
-        groups[label].append({'name': names[i], 'index': i })
+    groups = assign_groups(clusters, test, names)
 
     for key, val in groups.items():
         print("Group", key)
         print("\n")
         print(val)
 
-   # get_statistical_profile(orig_stats, groups)
+    get_statistical_profile(orig_stats, groups)
     print(probs[51])
+    plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
