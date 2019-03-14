@@ -166,43 +166,57 @@ def assign_groups(clusters, data, names):
 
     return groups
 
-def main():
-    names, stats, t1, t2, t3, t4 = read_data()
-    orig_stats = stats
-    stats = standardize_data(stats)
-
+def plot_results(data, t1):
     fig1 = plt.figure(1)
-
-    #test = perform_pca(stats)
-    #test = perform_lda(stats, t1)
-    test = perform_pca_plus_lda(stats, t1)
-
     ax = fig1.add_subplot(211)
-    for i, obs in enumerate(test):
+    for i, obs in enumerate(data):
         ax.scatter(obs[0], obs[1], c=get_t1_colors(t1[i]), s=5)
 
         #if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
         #    ax.annotate(names[i], (obs[0], obs[1]))
 
     ax = fig1.add_subplot(212)
-    clusters, probs = get_gmm(test)
+    clusters, probs = get_gmm(data)
     size = 20 * probs.max(1) ** 2
-    ax.scatter(test[:,0], test[:,1], c=clusters, cmap='viridis', s=size)
+    ax.scatter(data[:,0], data[:,1], c=clusters, cmap='viridis', s=size)
 
-    labels = clusters
 
-    groups = assign_groups(clusters, test, names)
-
-    for key, val in groups.items():
-        print("Group", key)
-        print("\n")
-        print(val)
-
-    get_statistical_profile(orig_stats, groups)
-    print(probs[51])
-    plt.tight_layout()
-    plt.show()
-
-if __name__ == "__main__":
-    main()
+#def main():
+#    names, stats, t1, t2, t3, t4 = read_data()
+#    orig_stats = stats
+#    stats = standardize_data(stats)
+#
+#    fig1 = plt.figure(1)
+#
+#    #test = perform_pca(stats)
+#    #test = perform_lda(stats, t1)
+#    test = perform_pca_plus_lda(stats, t1)
+#
+#    ax = fig1.add_subplot(211)
+#    for i, obs in enumerate(test):
+#        ax.scatter(obs[0], obs[1], c=get_t1_colors(t1[i]), s=5)
+#
+#        #if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
+#        #    ax.annotate(names[i], (obs[0], obs[1]))
+#
+#    ax = fig1.add_subplot(212)
+#    clusters, probs = get_gmm(test)
+#    size = 20 * probs.max(1) ** 2
+#    ax.scatter(test[:,0], test[:,1], c=clusters, cmap='viridis', s=size)
+#
+#    labels = clusters
+#
+#    groups = assign_groups(clusters, test, names)
+#
+#    #for key, val in groups.items():
+#    #    print("Group", key)
+#    #    print("\n")
+#    #    print(val)
+#
+#    get_statistical_profile(orig_stats, groups)
+#    plt.tight_layout()
+#    plt.show()
+#
+#if __name__ == "__main__":
+#    main()
 

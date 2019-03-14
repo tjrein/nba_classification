@@ -22,7 +22,7 @@ def read_data():
     targets_3 = []
     targets_4 = []
 
-    with open('./nba_2017_combined.csv', newline='') as csvfile:
+    with open('./data/nba_2017_combined.csv', newline='') as csvfile:
         nbareader = csv.reader(csvfile)
 
         next(nbareader)
@@ -72,10 +72,7 @@ def read_data():
 
     player_stats = np.array(player_stats)
     player_stats = player_stats.astype(np.float)
-    #remove = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
     remove = [0, 1, 2, 3, 25]
     player_stats = np.delete(player_stats, remove, 1)
-
-    print(player_stats.shape)
 
     return (names, player_stats, targets_1, targets_2, targets_3, targets_4)
