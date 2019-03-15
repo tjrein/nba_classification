@@ -19,6 +19,7 @@ def main():
     args = sys.argv
     names, stats, t1, t2, t3, t4 = read_data()
     stats = standardize_data(stats)
+    lc_names = [ name.lower() for name in names ]
 
     method = perform_pca
     results = []
@@ -32,12 +33,16 @@ def main():
         results = method(stats)
 
     clusters, probs = get_gmm(results)
+
+    if len(args) > 2:
+        name_arg = args[2].lower()
+        index = lc_names.index(name_arg)
+        names = [names[index]]
+        probs = [probs[index]]
     
-    pp = pprint.PrettyPrinter()
     for i, name in enumerate(names):
-        print(name + ':',  end=' ')
         test = np.array2string(probs[i], formatter={'float_kind':lambda x: "%.3f" % x})
-        print(test, '\n')
+        print('\n' + name + ': ' + test + '\n')
 
 if __name__ == '__main__':
     main()

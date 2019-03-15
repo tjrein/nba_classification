@@ -154,6 +154,7 @@ def get_gmm(data):
     probs = gmm.predict_proba(data)
     return (clusters, probs)
 
+
 def assign_groups(clusters, data, names):
     groups = {}
     for i, obs in enumerate(data):
