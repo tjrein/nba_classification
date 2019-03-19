@@ -1,6 +1,8 @@
 import numpy as np
 import sklearn
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from  matplotlib.lines import Line2D
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from data import read_data, standardize_data
@@ -84,6 +86,15 @@ def get_t4_colors(position):
     }[position]
 
     return color
+
+def get_labels():
+    red = Line2D(range(1), range(1), color="white", marker='o', markerfacecolor="red", label="PG")
+    blue = Line2D(range(1), range(1), color="white", marker='o', markerfacecolor="blue", label="SG")
+    yellow = Line2D(range(1), range(1), color="white", marker='o', markerfacecolor="yellow", label="SF")
+    cyan = Line2D(range(1), range(1), color="white", marker='o', markerfacecolor="cyan", label="PF")
+    green = Line2D(range(1), range(1), color="white", marker='o', markerfacecolor="green", label="C")
+
+    return [ red, blue, yellow, cyan, green]
 
 def compute_aic(test):
     aic = []
@@ -169,17 +180,22 @@ def assign_groups(clusters, data, names):
 
 def plot_results(data, t1):
     fig1 = plt.figure(1)
-    ax = fig1.add_subplot(211)
+    ax = fig1.add_subplot(111)
+    #red = Line2D(range(1), range(1), color="white", marker='o', markerfacecolor="red", label="PG")
     for i, obs in enumerate(data):
-        ax.scatter(obs[0], obs[1], c=get_t1_colors(t1[i]), s=5)
+        ax.scatter(obs[0], obs[1], c=get_t1_colors(t1[i]), s=5, label=t1[i])
 
         #if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
         #    ax.annotate(names[i], (obs[0], obs[1]))
 
-    ax = fig1.add_subplot(212)
-    clusters, probs = get_gmm(data)
-    size = 20 * probs.max(1) ** 2
-    ax.scatter(data[:,0], data[:,1], c=clusters, cmap='viridis', s=size)
+    handles = get_labels()
+    ax.legend(handles=handles)
+
+    #fig2 = plt.figure(2)
+    #ax = fig2.add_subplot(111)
+    #clusters, probs = get_gmm(data)
+    #size = 20 * probs.max(1) ** 2
+    #ax.scatter(data[:,0], data[:,1], c=clusters, cmap='viridis', s=size)
 
 
 #def main():

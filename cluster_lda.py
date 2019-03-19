@@ -12,6 +12,7 @@ def main():
     plot_results(results, t1)
 
     plt.tight_layout()
+    plt.axis('off')
     plt.show()
 
 if __name__ == '__main__':
