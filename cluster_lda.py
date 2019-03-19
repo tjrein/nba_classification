@@ -9,7 +9,7 @@ def main():
     stats = standardize_data(stats)
 
     results = perform_lda(stats, t1)
-    plot_results(results, t1)
+    plot_results(results, t1, names)
 
     plt.tight_layout()
     plt.axis('off')

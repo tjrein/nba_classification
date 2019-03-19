@@ -9,9 +9,10 @@ def main():
     stats = standardize_data(stats)
 
     results = perform_pca(stats)
-    plot_results(results, t1)
+    plot_results(results, t1, names)
 
     plt.tight_layout()
+    plt.axis('off')
     plt.show()
 
 if __name__ == '__main__':

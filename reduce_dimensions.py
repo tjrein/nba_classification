@@ -178,24 +178,25 @@ def assign_groups(clusters, data, names):
 
     return groups
 
-def plot_results(data, t1):
-    fig1 = plt.figure(1)
+def plot_results(data, t1, names):
+    fig1 = plt.figure(figsize=(3.5, 3.5))
     ax = fig1.add_subplot(111)
+    #print("handles", handles)
     #red = Line2D(range(1), range(1), color="white", marker='o', markerfacecolor="red", label="PG")
     for i, obs in enumerate(data):
         ax.scatter(obs[0], obs[1], c=get_t1_colors(t1[i]), s=5, label=t1[i])
 
-        #if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
-        #    ax.annotate(names[i], (obs[0], obs[1]))
+        if names[i] in ["Giannis Antetokounmpo", "Kevin Durant", "James Harden", "LeBron James"]:
+            ax.annotate(names[i], (obs[0], obs[1]))
 
     handles = get_labels()
-    ax.legend(handles=handles)
+    ax.legend(handles=handles, bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure)
 
-    #fig2 = plt.figure(2)
-    #ax = fig2.add_subplot(111)
-    #clusters, probs = get_gmm(data)
-    #size = 20 * probs.max(1) ** 2
-    #ax.scatter(data[:,0], data[:,1], c=clusters, cmap='viridis', s=size)
+    fig2 = plt.figure(figsize=(3.5, 3.5))
+    ax = fig2.add_subplot(111)
+    clusters, probs = get_gmm(data)
+    size = 20 * probs.max(1) ** 2
+    ax.scatter(data[:,0], data[:,1], c=clusters, cmap='viridis', s=size)
 
 
 #def main():
