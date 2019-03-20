@@ -59,7 +59,7 @@
 
 ==== get_statistical_profile.py ====
     Script used to display statistical profiles for computed clusters.
-    Displays a bar graph containing statistical averages of group compared with leage averages.
+    Displays a bar graph containing statistical averages of group compared with league averages.
 
     Can accept two command line args: method and group
     method can be one of 'pca', 'lda', or '+'
@@ -71,7 +71,7 @@
     
     ex. python3 get_statistical_profile.py lda 6
 
-    If this script is called without arguments, it output all the groups and players clustered in those groups for a given method.
+    If this script is called without arguments, it will output all the groups and players clustered in those groups for a given method.
     Calling this script without arguments can be used to determine which group numbers are present in a given method. 
     The default method is PCA.
 
